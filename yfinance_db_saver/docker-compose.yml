@@ -1,0 +1,25 @@
+services:
+  app:
+    build: ./app
+    volumes:
+      - ./app:/usr/src/app
+    depends_on:
+      - db
+    env_file:
+      - ../.env
+    networks:
+      - shared-net
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - ../.env
+    networks:
+      - shared-net
+
+volumes:
+  postgres_data:
+
+networks:
+  shared-net:

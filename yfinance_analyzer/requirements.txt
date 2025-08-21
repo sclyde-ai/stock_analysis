@@ -1,0 +1,6 @@
+pandas
+numpy
+matplotlib
+jupyter
+yfinance
+psycopg2-binary
