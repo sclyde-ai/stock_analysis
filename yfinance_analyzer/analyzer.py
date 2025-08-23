@@ -3,7 +3,7 @@ import psycopg2
 import pandas as pd
 
 # 参照したいテーブル名（例: 'aapl_stock_data'）
-TABLE_NAME = 'aapl_stock_data'
+TABLE_NAME = 'amzn'
 
 try:
     # Connect to the database

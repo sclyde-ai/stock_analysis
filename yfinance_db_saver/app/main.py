@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 def get_stock_data(ticker):
     stock = yf.Ticker(ticker)
     time.sleep(1)
-    data = stock.history(period="1m")
+    data = stock.history(period="1d")
     return data
 
 def save_to_db(data, table_name, engine):
@@ -41,7 +41,7 @@ if __name__ == "__main__":
         stock_data = get_stock_data(ticker)
         if not stock_data.empty:
             print(f"Saving data for {ticker} to the database...")
-            save_to_db(stock_data, f"{ticker.lower()}_stock_data", engine)
+            save_to_db(stock_data, f"{ticker.lower()}", engine)
             print(f"Successfully saved data for {ticker}.")
         else:
             print(f"No data found for {ticker}.")
