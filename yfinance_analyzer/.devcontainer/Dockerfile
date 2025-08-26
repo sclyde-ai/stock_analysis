@@ -1,7 +1,7 @@
 FROM python:3.10-slim-buster
 
 # Set the working directory
-WORKDIR /workspaces/yfinance_analyzer
+WORKDIR /workspaces
 
 # Copy the requirements file
 COPY requirements.txt .

@@ -2,7 +2,7 @@
   "name": "Python 3 Data Analysis",
   "dockerComposeFile": "docker-compose.yml",
   "service": "analyzer",
-  "workspaceFolder": "/workspaces/yfinance_analyzer",
+  "workspaceFolder": "/workspaces",
   "customizations": {
     "vscode": {
       "settings": {
