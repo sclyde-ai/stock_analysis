@@ -12,7 +12,9 @@ if [ -z "$(docker compose -f yfinance_db_saver/docker-compose.yml ps -q db)" ] |
 fi
 
 echo "--- Listing Databases ---"
-docker compose -f yfinance_db_saver/docker-compose.yml exec -T db psql -U "$POSTGRES_USER" -c "\l"
+docker compose -f yfinance_db_saver/docker-compose.yml exec -T db psql -U "$POSTGRES_USER" -d "postgres" -c "\l"
 
 echo -e "\n--- Listing Tables in $POSTGRES_DB ---"
 docker compose -f yfinance_db_saver/docker-compose.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "\dt"
+
+docker compose -f yfinance_db_saver/docker-compose.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT * FROM aapl LIMIT 10;"
