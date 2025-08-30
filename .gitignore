@@ -1,6 +1,7 @@
 # Ignore environment variables file
 .env
 parameter.json
+yfinance_db_saver/app/parameter.json
 
 # Ignore python cache
 __pycache__/
