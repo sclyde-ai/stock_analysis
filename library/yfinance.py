@@ -10,14 +10,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib.dates as mdates
-import importlib.resources
 from statsmodels.graphics.tsaplots import plot_acf
 from statsmodels.tsa.stattools import acf
 import pandas as pd
 from statsmodels.tsa.api import VAR
 import time
 from statsmodels.tsa.stattools import adfuller
-from . import ListAndStr, CashTime
+from . import ListAndStr
 from statsmodels.stats.stattools import durbin_watson
 import os
 import pandas as pd
@@ -26,6 +25,14 @@ from dotenv import load_dotenv
 import matplotlib.pyplot as plt
 # from sklearn.preprocessing import StandardScaler
 # from sklearn.metrics import mean_squared_error
+
+with open('../parameter.json', 'r', encoding='utf-8') as f:
+    json_string = f.read()
+    parameter = json.loads(json_string)
+    lower_tickers = [ticker.lower() for ticker in parameter['tickers']]
+
+date_interval = ['1d', '5d', '1wk', '1mo', '3mo']
+datetime_interval = ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h']
 
 def get_values_ranking_df(matrix, ascending=False):
     np_matrix = np.array(matrix)
@@ -48,34 +55,47 @@ def get_values_ranking_df(matrix, ascending=False):
     return df_sorted
 
 class Tickers():
-    def __init__(self, tickers: ListAndStr):
-        self.tickers = tickers
+    def __init__(self, tickers: ListAndStr = parameter["tickers"], intervals: ListAndStr = parameter["intervals"]):
+        lower_tickers = [ticker.lower() for ticker in tickers]
+        self.tickers = lower_tickers
+        self.intervals = intervals
 
     def get_data(
             self,
             ticker: str,
+            interval: str
         ) -> pd.DataFrame:
+
         load_dotenv(dotenv_path='../.env')
         DATABASE_URL = os.environ.get("DATABASE_URL").replace("db:5432", "localhost:5433")
-        engine = create_engine(DATABASE_URL)
+        engine = create_engine(DATABASE_URL) 
         print("Successfully connected to the database.")
         try:
-            data = pd.read_sql(ticker, engine, index_col='Date')
-            print(f"Successfully loaded data for {ticker}")
+            if interval in date_interval:
+                data = pd.read_sql(f"{ticker}_{interval}", engine, index_col='Date')
+            else:
+                data = pd.read_sql(f"{ticker}_{interval}", engine, index_col='Datetime')
+            print(f"Successfully loaded data for {ticker}_{interval}")
+            return data
         except Exception as e:
-            print(f"Could not load data for {ticker}: {e}")
-        return data
+            print(f"Could not load data for {ticker}_{interval}: {e}")
+            return None
 
     def get_all_data(self) -> dict:
         ticker_dict = {}
+        print(self.tickers)
         for ticker in self.tickers:
-            ticker_dict[ticker] = self.get_data(ticker)
+            interval_dict = {}
+            for interval in self.intervals:
+                interval_dict[interval] = self.get_data(ticker, interval)
+            ticker_dict[ticker] = interval_dict
         return ticker_dict
 
 class Stock(Tickers):
-    def __init__(self, tickers: ListAndStr, interval: str='1m', save_path: str=None):
-        super().__init__(tickers)
+    def __init__(self, tickers: ListAndStr=lower_tickers, interval: str='1m'):
+        super().__init__(tickers, intervals=[interval])
         self.tickers = tickers
+        self.interval = interval
         self.data = self.get_all_data()
         self.close = self.close()
         self.open = self.open()
@@ -83,35 +103,15 @@ class Stock(Tickers):
         self.low = self.low()
         self.prices = self.close
         self.prices = self.prices.dropna(how='all', axis=1)
-        if not isinstance(self.prices.index, pd.DatetimeIndex):
-            print("Index is not datetime - converting...")
-            try:
-                self.prices.index = pd.to_datetime(self.prices.index, utc=True)
-                print("Successfully converted index to DatetimeIndex")
-            except Exception as e:
-                print(f"Could not convert index to datetime: {e}")
-        else:
-            print("Index is already datetime")
-
-        if 'mo' in interval:
-            self.prices.index = self.prices.index.strftime('%Y-%m')
-        elif 'wk' in interval:
-            self.prices.index = self.prices.index.strftime('%Y-%m-%d')
-        elif 'd' in interval:
-            self.prices.index = self.prices.index.strftime('%Y-%m-%d')
-        elif 'h' in interval:
-            self.prices.index = self.prices.index.strftime('%Y-%m-%d %H')
-        elif 'm' in interval:
-            self.prices.index = self.prices.index.strftime('%Y-%m-%d %H:%M')
-        
-        self.save_path = save_path
-        self.series_type = ''
-        if not save_path:
-            self.save_path = save_path
-        elif save_path.endswith('/'):
-            self.save_path = save_path
-        else:
-            self.save_path = save_path + '/'
+        # if not isinstance(self.prices.index, pd.DatetimeIndex):
+        #     print("Index is not datetime - converting...")
+        #     try:
+        #         self.prices.index = pd.to_datetime(self.prices.index, utc=True)
+        #         print("Successfully converted index to DatetimeIndex")
+        #     except Exception as e:
+        #         print(f"Could not convert index to datetime: {e}")
+        # else:
+        #     print("Index is already datetime")
 
     def dropna(self, how='any', axis=0):
         self.prices = self.prices.dropna(how=how, axis=axis)
@@ -156,25 +156,25 @@ class Stock(Tickers):
     
     def set_close(self):
         for ticker in self.tickers:
-            self.prices[ticker] = self.data[ticker]['Close']
+            self.prices[ticker] = self.data[ticker][self.interval]['Close']
         return self
     def set_open(self):
         for ticker in self.tickers:
-            self.prices[ticker] = self.data[ticker]['Open']
+            self.prices[ticker] = self.data[ticker][self.interval]['Open']
         return self
     def set_high(self):
         for ticker in self.tickers:
-            self.prices[ticker] = self.data[ticker]['High']
+            self.prices[ticker] = self.data[ticker][self.interval]['High']
         return self
     def set_low(self):
         for ticker in self.tickers:
-            self.prices[ticker] = self.data[ticker]['Low']
+            self.prices[ticker] = self.data[ticker][self.interval]['Low']
         return self
     
     def close(self):
         df = pd.DataFrame()
         for ticker in self.tickers:
-            series = self.data[ticker]['Close']
+            series = self.data[ticker][self.interval]['Close']
             series.name = ticker 
             df = df.join(series, how='outer')
         df = df.dropna(how='all', axis=1)
@@ -183,7 +183,7 @@ class Stock(Tickers):
     def open(self):
         df = pd.DataFrame()
         for ticker in self.tickers:
-            series = self.data[ticker]['Open']
+            series = self.data[ticker][self.interval]['Open']
             series.name = ticker 
             df = df.join(series, how='outer')
         df = df.dropna(how='all', axis=1)
@@ -192,7 +192,7 @@ class Stock(Tickers):
     def high(self):
         df = pd.DataFrame()
         for ticker in self.tickers:
-            series = self.data[ticker]['High']
+            series = self.data[ticker][self.interval]['High']
             series.name = ticker 
             df = df.join(series, how='outer')
         df = df.dropna(how='all', axis=1)
@@ -201,7 +201,7 @@ class Stock(Tickers):
     def low(self):
         df = pd.DataFrame()
         for ticker in self.tickers:
-            series = self.data[ticker]['Low']
+            series = self.data[ticker][self.interval]['Low']
             series.name = ticker 
             df = df.join(series, how='outer')
         df = df.dropna(how='all', axis=1)

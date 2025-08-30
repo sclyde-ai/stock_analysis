@@ -29,8 +29,3 @@ class MinuteInHour():
             raise ValueError("type is incorrect")
         if self.minute >= 60:
             raise ValueError("hour is below 24")
-@dataclass
-class CashTime():
-    cache_days: int
-    cache_hours: HourInDay
-    cache_minutes: MinuteInHour

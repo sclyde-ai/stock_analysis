@@ -21,33 +21,30 @@ if __name__ == "__main__":
             parameter = json.loads(json_string)
         
         DATABASE_URL = os.environ.get("DATABASE_URL")
-        print(DATABASE_URL)
-        
-        # Retry connecting to the database
-        for _ in range(5):
-            try:
-                engine = create_engine(DATABASE_URL)
-                connection = engine.connect()
-                connection.close()
-                print("Successfully connected to the database.")
-                break
-            except Exception as e:
-                print(f"Could not connect to database: {e}")
-                print("Retrying in 5 seconds...")
-                time.sleep(5)
-        else:
-            print("Could not connect to the database after several retries. Exiting.")
+        if not DATABASE_URL:
+            print("DATABASE_URL environment variable not set. Exiting.")
             exit(1)
 
-        for ticker in parameter["tickers"]:
-            print(f"Fetching data for {ticker}...")
-            stock_data = get_stock_data(ticker, interval=parameter["interval"], period=parameter["period"])
-            if not stock_data.empty:
-                print(f"Saving data for {ticker} to the database...")
-                save_to_db(stock_data, f"{ticker.lower()}", engine)
-                print(f"Successfully saved data for {ticker}.")
-            else:
-                print(f"No data found for {ticker}.")
+        engine = create_engine(DATABASE_URL)
+        try:
+            connection = engine.connect()
+            connection.close()
+            print(f"Successfully connected to the database.")
+        except Exception as e:
+            print(f"Could not connect to database: {e}")
+            exit(1)
+
+        for interval in parameter["intervals"]:
+            for ticker in parameter["tickers"]:
+                print(f"Fetching data for {ticker} with interval {interval}...")
+                stock_data = get_stock_data(ticker, interval=interval, period=parameter["period"])
+                if not stock_data.empty:
+                    table_name = f"{ticker.lower()}_{interval}"
+                    print(f"Saving data for {ticker} with interval {interval} to table {table_name}...")
+                    save_to_db(stock_data, table_name, engine)
+                    print(f"Successfully saved data for {ticker} with interval {interval}.")
+                else:
+                    print(f"No data found for {ticker} with interval {interval}.")
 
         print("Finished fetching and saving stock data.")
     except Exception as e:
