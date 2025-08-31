@@ -3,6 +3,7 @@ services:
     build: ./app
     volumes:
       - ./app:/usr/src/app
+      - ../parameter.json:/usr/src/app/parameter.json
     depends_on:
       - db
     env_file:
@@ -17,6 +18,8 @@ services:
       - ../.env
     networks:
       - shared-net
+    ports:
+      - "5433:5432"
 
 volumes:
   postgres_data:

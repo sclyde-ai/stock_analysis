@@ -1,10 +1,13 @@
 # Ignore environment variables file
 .env
+*.bash
+*.sh
+parameter.json
+yfinance_db_saver/app/parameter.json
+analysis/data_analysis.ipynb
 
 # Ignore python cache
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-
-*.bash

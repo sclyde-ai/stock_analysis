@@ -1,1 +1,0 @@
-docker compose -f yfinance_db_saver/docker-compose.yml up -d
