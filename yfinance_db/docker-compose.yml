@@ -1,9 +1,9 @@
 services:
   app:
-    build: ./app
+    build: .
     volumes:
-      - ./app:/usr/src/app
-      - ../parameter.json:/usr/src/app/parameter.json
+      - .:/app
+      - ../parameter.json:/app/parameter.json
     depends_on:
       - db
     env_file:
