@@ -26,13 +26,22 @@ if __name__ == "__main__":
             exit(1)
 
         engine = create_engine(DATABASE_URL)
-        try:
-            connection = engine.connect()
-            connection.close()
-            print(f"Successfully connected to the database.")
-        except Exception as e:
-            print(f"Could not connect to database: {e}")
-            exit(1)
+        max_retries = 10
+        retry_delay = 5  # seconds
+        for i in range(max_retries):
+            try:
+                connection = engine.connect()
+                connection.close()
+                print(f"Successfully connected to the database.")
+                break  # 接続に成功したらループを抜ける
+            except Exception as e:
+                print(f"Could not connect to database (attempt {i+1}/{max_retries}): {e}")
+                if i < max_retries - 1:
+                    print(f"Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+                else:
+                    print("Failed to connect to the database after multiple retries. Exiting.")
+                    exit(1)
 
         for interval in parameter["intervals"]:
             for ticker in parameter["tickers"]:

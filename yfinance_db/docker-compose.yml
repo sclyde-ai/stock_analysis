@@ -7,15 +7,15 @@ services:
     depends_on:
       - db
     env_file:
-      - ../.env
+      - ./.env
     networks:
       - shared-net
   db:
-    image: postgres:13
+    image: postgres:12
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
-      - ../.env
+      - ./.env
     networks:
       - shared-net
     ports:
