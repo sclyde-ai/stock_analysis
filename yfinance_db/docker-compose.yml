@@ -1,25 +1,28 @@
 services:
   app:
+    container_name: yfinance_app
     build: .
+    env_file:
+      - ./.env
+    networks:
+      - shared-net
     volumes:
       - .:/app
-      - ../parameter.json:/app/parameter.json
     depends_on:
       - db
+    restart: always
+  db:
+    container_name: yfinance_db
+    image: postgres:12
     env_file:
       - ./.env
+    ports:
+      - "${DB_PORT}:5432"
     networks:
       - shared-net
-  db:
-    image: postgres:12
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-    env_file:
-      - ./.env
-    networks:
-      - shared-net
-    ports:
-      - "5433:5432"
+    restart: always
 
 volumes:
   postgres_data:

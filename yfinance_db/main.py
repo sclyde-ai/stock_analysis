@@ -4,6 +4,19 @@ import yfinance as yf
 import pandas as pd
 from sqlalchemy import create_engine
 import json
+from dotenv import load_dotenv
+
+# .envファイルから環境変数を読み込む
+load_dotenv()
+
+# --- 環境変数から設定を読み込み ---
+NEWS_API_KEY = os.getenv('NEWS_API_KEY')
+DB_NAME = os.getenv('YFINANCE_DB')
+DB_USER = os.getenv('POSTGRES_USER')
+DB_PASSWORD = os.getenv('POSTGRES_PASSWORD')
+DB_HOST = os.getenv('DB_HOST')  # docker-compose.ymlで定義したサービス名
+DB_PORT = os.getenv('DB_PORT')
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 def get_stock_data(ticker, interval='1m', period='max'):
     stock = yf.Ticker(ticker)
@@ -20,7 +33,6 @@ if __name__ == "__main__":
             json_string = f.read()
             parameter = json.loads(json_string)
         
-        DATABASE_URL = os.environ.get("DATABASE_URL")
         if not DATABASE_URL:
             print("DATABASE_URL environment variable not set. Exiting.")
             exit(1)

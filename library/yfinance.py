@@ -40,7 +40,7 @@ class Tickers():
             interval: str
         ) -> pd.DataFrame:
 
-        load_dotenv(dotenv_path='../.env')
+        load_dotenv(dotenv_path='../yfinance_db/.env')
         DATABASE_URL = os.environ.get("DATABASE_URL").replace("db:5432", "localhost:5433")
         engine = create_engine(DATABASE_URL) 
         print("Successfully connected to the database.")
