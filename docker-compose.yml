@@ -30,8 +30,7 @@ services:
       - shared-net
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
-      - ./news_db/init.sql:/docker-entrypoint-initdb.d/init_news.sql
+      - ./initdb.d:/docker-entrypoint-initdb.d
     restart: always
 
 volumes:

@@ -10,6 +10,7 @@ build + run
 ### docker compose build
 ### docker compose run
 ### docker compose logs
+### docker compose exec
 
 ## docker system
 ### docker system prune
@@ -17,8 +18,17 @@ build + run
 -a : all docker images
 --volumes : volumeも削除する
 
+
 # useful command 
 docker compose exec -T db psql -U user -l
+docker compose exec db psql -U user -d <database>
+
+# tips
+## 詳細なerror確認
+    environment:
+        - PYTHONUNBUFFERED=1
+## docker-entrypoint-initdb.d
+初回起動時のみ実行される
 
 # docker-compose.yml
 定義、識別

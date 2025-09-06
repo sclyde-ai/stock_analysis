@@ -22,28 +22,26 @@ DB_PORT = os.getenv('DB_PORT')
 def get_db_connection():
     """DBへの接続を試み、失敗した場合はリトライする"""
     conn = None
-    while conn is None:
-        try:
-            conn = psycopg2.connect(
-                dbname=DB_NAME,
-                user=DB_USER,
-                password=DB_PASSWORD,
-                host=DB_HOST,
-                port=DB_PORT
-            )
-        except psycopg2.OperationalError as e:
-            print(f"データベース接続に失敗しました: {e}")
-            print("5秒後に再試行します...")
-            time.sleep(5)
+    # while conn is None:
+    try:
+        conn = psycopg2.connect(
+            dbname=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            host=DB_HOST,
+            port=DB_PORT
+        )
+    except psycopg2.OperationalError as e:
+        print(f"データベース接続に失敗しました: {e}")
+        # print("5秒後に再試行します...")
+        # time.sleep(5)
     return conn
 
 def fetch_and_save_news():
     """News APIからデータを取得し、DBに保存する関数"""
     print("ニュースの取得を開始します...")
     
-    # News APIのエンドポイント (日本のビジネスカテゴリ)
     url = f"https://newsapi.org/v2/top-headlines"
-
     
     try:
         categories = [
@@ -90,6 +88,9 @@ def fetch_and_save_news():
 
             # DBに接続して保存
             conn = get_db_connection()
+            if conn is None:
+                print("データベース接続がありません。処理を中断します。")
+                return
             cur = conn.cursor()
             
             # ON CONFLICT句でURLの重複を無視する
@@ -119,9 +120,9 @@ if __name__ == "__main__":
     # 最初に一度実行
     fetch_and_save_news()
 
-    # 1時間ごとにfetch_and_save_news関数を実行するようにスケジュール
-    schedule.every().hour.do(fetch_and_save_news)
+    # # 1時間ごとにfetch_and_save_news関数を実行するようにスケジュール
+    # schedule.every().hour.do(fetch_and_save_news)
 
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    # while True:
+    #     schedule.run_pending()
+    #     time.sleep(1)
