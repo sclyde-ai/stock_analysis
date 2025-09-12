@@ -16,7 +16,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data  # データを永続化するためのボリューム
     ports:
-      - "5432:5432"  # ホストPCからDBに接続したい場合に設定（任意）
+      - "${DB_PORT}:5432"  # ホストPCからDBに接続したい場合に設定（任意）
 
 volumes:
   # データを永続化するための名前付きボリューム

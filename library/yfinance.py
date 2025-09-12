@@ -25,8 +25,19 @@ with open('../parameter.json', 'r', encoding='utf-8') as f:
     lower_tickers = [ticker.lower() for ticker in parameter['tickers']]
 
 # date or datetime
-date_interval = ['1d', '5d', '1wk', '1mo', '3mo']
-datetime_interval = ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h']
+date_interval_list = ['1d', '5d', '1wk', '1mo', '3mo']
+datetime_interval_list = ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h']
+
+load_dotenv(dotenv_path='../.env')
+NEWS_API_KEY = os.getenv('NEWS_API_KEY')
+DB_NAME = os.getenv('NEWS_DB')
+DB_USER = os.getenv('POSTGRES_USER')
+DB_PASSWORD = os.getenv('POSTGRES_PASSWORD')
+DB_HOST = os.getenv('DB_HOST')
+DB_PORT = os.getenv('DB_PORT')
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@localhost:{DB_PORT}/yfinance"
+
+engine = create_engine(DATABASE_URL) 
 
 class Tickers():
     def __init__(self, tickers: ListAndStr = parameter["tickers"], intervals: ListAndStr = parameter["intervals"]):
@@ -40,12 +51,8 @@ class Tickers():
             interval: str
         ) -> pd.DataFrame:
 
-        load_dotenv(dotenv_path='../yfinance_db/.env')
-        DATABASE_URL = os.environ.get("DATABASE_URL").replace("db:5432", "localhost:5433")
-        engine = create_engine(DATABASE_URL) 
-        print("Successfully connected to the database.")
         try:
-            if interval in date_interval:
+            if interval in date_interval_list:
                 data = pd.read_sql(f"{ticker}_{interval}", engine, index_col='Date')
             else:
                 data = pd.read_sql(f"{ticker}_{interval}", engine, index_col='Datetime')

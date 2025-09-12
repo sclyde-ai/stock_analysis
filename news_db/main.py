@@ -1,8 +1,6 @@
 import os
-import time
 import requests
 import psycopg2
-import schedule
 from psycopg2.extras import execute_values
 from dotenv import load_dotenv
 
@@ -20,9 +18,8 @@ DB_HOST = os.getenv('DB_HOST')  # docker-compose.ymlで定義したサービス�
 DB_PORT = os.getenv('DB_PORT')
 
 def get_db_connection():
-    """DBへの接続を試み、失敗した場合はリトライする"""
+    """DBへの接続を試みる"""
     conn = None
-    # while conn is None:
     try:
         conn = psycopg2.connect(
             dbname=DB_NAME,
@@ -33,8 +30,6 @@ def get_db_connection():
         )
     except psycopg2.OperationalError as e:
         print(f"データベース接続に失敗しました: {e}")
-        # print("5秒後に再試行します...")
-        # time.sleep(5)
     return conn
 
 def fetch_and_save_news():
@@ -115,14 +110,5 @@ def fetch_and_save_news():
 
 
 if __name__ == "__main__":
-    print("サービスを開始します。1時間ごとにニュースを取得します。")
-    
-    # 最初に一度実行
+    print("ニュース取得処理を実行します。")
     fetch_and_save_news()
-
-    # # 1時間ごとにfetch_and_save_news関数を実行するようにスケジュール
-    # schedule.every().hour.do(fetch_and_save_news)
-
-    # while True:
-    #     schedule.run_pending()
-    #     time.sleep(1)
