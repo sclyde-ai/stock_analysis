@@ -1,0 +1,50 @@
+services:
+  db:
+    container_name: db
+    image: postgres:13-alpine
+    env_file:
+      - ./.env
+    ports:
+      - "${DB_PORT}:5432"
+    networks:
+      - shared-net
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+      - ./initdb.d:/docker-entrypoint-initdb.d
+    restart: always
+  # jupyter:
+  #   container_name: jupyter
+  #   build: jupyter
+  #   ports:
+  #     - "8888:8888"
+  #   volumes:
+  #     - .:/home/jovyan/work
+  #   networks:
+  #     - shared-net
+  #   depends_on:
+  #     - db
+  #   restart: always
+  yfinance:
+    container_name : yfinance
+    build: yfinance_db
+    env_file:
+      - ./yfinance_db/.env
+    networks:
+      - shared-net
+    depends_on:
+      - db
+  # news:
+  #   container_name: news
+  #   build: news_db
+  #   environment:
+  #     - PYTHONUNBUFFERED=1
+  #   env_file:
+  #     - ./news_db/.env
+  #   networks:
+  #     - shared-net
+  #   depends_on:
+  #     - db
+volumes:
+  postgres_data:
+networks:
+  shared-net:

@@ -5,7 +5,7 @@ from typing import List
 class ListAndStr():
     elem: List[str]
     def __post_init__(self):
-        if isinstance(self.items, list):
+        if isinstance(self.elem, list):
             return
         if isinstance(self.elem, str):
             self.elem=[self.elem]

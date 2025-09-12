@@ -1,0 +1,23 @@
+services:
+  # Pythonアプリケーションのサービス
+  jquants:
+    build: .
+    container_name: jquants_app
+    env_file:
+      - .env         # .envファイルから環境変数を読み込む
+    depends_on:
+      - db           # dbサービスが起動してから開始する
+  # PostgreSQLデータベースのサービス
+  db:
+    image: postgres:14-alpine  # 公式のPostgreSQLイメージを使用
+    container_name: postgres_db
+    env_file:
+      - ./.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # データを永続化するためのボリューム
+    ports:
+      - "${DB_PORT}:5432"  # ホストPCからDBに接続したい場合に設定（任意）
+
+volumes:
+  # データを永続化するための名前付きボリューム
+  postgres_data:

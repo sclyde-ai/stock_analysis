@@ -1,0 +1,26 @@
+services:
+  app:
+    container_name: news_app
+    build: .
+    environment:
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - ./.env
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+  db:
+    container_name: news_db
+    image: postgres:14-alpine
+    env_file:
+      - ./.env
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: always
+
+volumes:
+  postgres_data:
