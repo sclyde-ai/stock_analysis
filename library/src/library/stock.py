@@ -4,19 +4,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # standard
-import os
 import json
 
 # my library
-from . import ListAndStr
+from ... import ListAndStr
 from . import VAR
 
 # others
 from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib.dates as mdates
 from statsmodels.tsa.stattools import acf
-from sqlalchemy import create_engine
-from dotenv import load_dotenv
+
+from yfinance import Tickers
 
 # get parameter.json
 with open('../parameter.json', 'r', encoding='utf-8') as f:
@@ -27,50 +26,6 @@ with open('../parameter.json', 'r', encoding='utf-8') as f:
 # date or datetime
 date_interval_list = ['1d', '5d', '1wk', '1mo', '3mo']
 datetime_interval_list = ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h']
-
-load_dotenv(dotenv_path='../.env')
-NEWS_API_KEY = os.getenv('NEWS_API_KEY')
-DB_NAME = os.getenv('NEWS_DB')
-DB_USER = os.getenv('POSTGRES_USER')
-DB_PASSWORD = os.getenv('POSTGRES_PASSWORD')
-DB_HOST = os.getenv('DB_HOST')
-DB_PORT = os.getenv('DB_PORT')
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@localhost:{DB_PORT}/yfinance"
-
-engine = create_engine(DATABASE_URL) 
-
-class Tickers():
-    def __init__(self, tickers: ListAndStr = parameter["tickers"], intervals: ListAndStr = parameter["intervals"]):
-        lower_tickers = [ticker.lower() for ticker in tickers]
-        self.tickers = lower_tickers
-        self.intervals = intervals
-
-    def get_data(
-            self,
-            ticker: str,
-            interval: str
-        ) -> pd.DataFrame:
-
-        try:
-            if interval in date_interval_list:
-                data = pd.read_sql(f"{ticker}_{interval}", engine, index_col='Date')
-            else:
-                data = pd.read_sql(f"{ticker}_{interval}", engine, index_col='Datetime')
-            print(f"Successfully loaded data for {ticker}_{interval}")
-            return data
-        except Exception as e:
-            print(f"Could not load data for {ticker}_{interval}: {e}")
-            return None
-
-    def get_all_data(self) -> dict:
-        ticker_dict = {}
-        print(self.tickers)
-        for ticker in self.tickers:
-            interval_dict = {}
-            for interval in self.intervals:
-                interval_dict[interval] = self.get_data(ticker, interval)
-            ticker_dict[ticker] = interval_dict
-        return ticker_dict
 
 class Stock(Tickers):
     def __init__(self, tickers: ListAndStr=lower_tickers, interval: str='1m'):
@@ -132,22 +87,22 @@ class Stock(Tickers):
         self.series_type += '_log_diff'
         return self
     
-    def set_close(self):
+    def _set_close(self):
         for ticker in self.tickers:
             self.prices[ticker] = self.data[ticker][self.interval]['Close']
         self.value_type = 'Close'
         return self
-    def set_open(self):
+    def _set_open(self):
         for ticker in self.tickers:
             self.prices[ticker] = self.data[ticker][self.interval]['Open']
         self.value_type = 'Open'
         return self
-    def set_high(self):
+    def _set_high(self):
         for ticker in self.tickers:
             self.prices[ticker] = self.data[ticker][self.interval]['High']
         self.vale_type = 'High'
         return self
-    def set_low(self):
+    def _set_low(self):
         for ticker in self.tickers:
             self.prices[ticker] = self.data[ticker][self.interval]['Low']
         self.value_type = 'Low'
@@ -276,82 +231,3 @@ class Stock(Tickers):
             plt.grid(True)
             plt.show()
             plt.close()
-
-class Option(Stock):
-    def __init__(self, tickers):
-        super().__init__(tickers)
-        self.options = self.get_attribute('options')
-
-class Holder(Stock):
-    def __init__(self, tickers):
-        super().__init__(tickers)
-        self.major_holders = self.get_attribute('major_holders')
-        self.institutional_holders = self.get_attribute('institutional_holders')
-        self.mutualfund_holders = self.get_attribute('mutualfund_holders')
-
-class Currency(Stock):
-    def __init__(self, tickers: ListAndStr, period: str='max', interval: str='1d'):
-        super().__init__(tickers, period, interval)
-
-class Finance(Tickers):
-    def __init__(self, tickers, quarterly=False):
-        super().__init__(tickers)
-        self.balance_sheet = self.get_attribute('balance_sheet')    
-        self.income_stmt = self.get_attribute('income_stmt')    
-        self.cashflow = self.get_attribute('cashflow')
-        if quarterly:
-            self.balance_sheet = self.get_attribute('quarterly_balance_sheet')    
-            self.income_stmt = self.get_attribute('quarterly_income_stmt')    
-            self.cashflow = self.get_attribute('quarterly_cashflow')
-        for ticker in self.tickers:
-            self.balance_sheet[ticker] = self.balance_sheet[ticker].T
-            self.income_stmt[ticker] = self.income_stmt[ticker].T
-            self.cashflow[ticker] = self.cashflow[ticker].T
-
-    def get_indices(self, ticker):
-        # 空のDataFrame作成
-        indeces = pd.DataFrame()
-        
-        try:
-            BS = self.balance_sheet[ticker]
-            PL = self.income_stmt[ticker]
-            
-            # 安全にデータを取得するヘルパー関数
-            def get_safe(df, col):
-                return df[col] if col in df.columns else pd.Series(dtype='float64')
-            
-            # 必要なデータを取得
-            total_revenue = get_safe(PL, 'Total Revenue')
-            cost_of_revenue = get_safe(PL, 'Cost Of Revenue')
-            net_income = get_safe(PL, 'Net Income')
-            inventory = get_safe(BS, 'Inventory')
-            stockholders_equity = get_safe(BS, 'Stockholders Equity')
-            treasury_shares = get_safe(BS, 'Treasury Shares Number')
-            shares_issued = get_safe(BS, 'Share Issued')
-            
-            # 財務指標計算 (ゼロ除算を避けるためnp.where使用)
-            indeces['Gross Profit'] = total_revenue - cost_of_revenue
-            
-            with np.errstate(divide='ignore', invalid='ignore'):
-                indeces['Cost Of Revenue Ratio'] = np.where(total_revenue != 0, cost_of_revenue / total_revenue, np.nan)
-                indeces['Inventory Turnover'] = np.where(inventory != 0, cost_of_revenue / inventory, np.nan)
-                indeces['ROE'] = np.where(stockholders_equity != 0, net_income / stockholders_equity, np.nan)
-                indeces['Treasury Stock Ratio'] = np.where(shares_issued != 0, treasury_shares / shares_issued, np.nan)
-            
-            # インデックスを設定
-            if not indeces.empty:
-                indeces.index = PL.index if not PL.empty else BS.index
-                
-        except KeyError as e:
-            print(f"Error: {e} not found for ticker {ticker}")
-        except Exception as e:
-            print(f"Unexpected error occurred: {e}")
-        
-        return indeces
-
-class Insider(Tickers):
-    def __init__(self, tickers):
-        super().__init__(tickers)
-        self.insider_purchases = self.get_attribute('insider_purchases')    
-        self.insider_roster_holders = self.get_attribute('insider_roster_holders')    
-        self.insider_transactions = self.get_attribute('insider_transactions')

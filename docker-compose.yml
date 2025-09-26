@@ -4,6 +4,8 @@ services:
     image: postgres:13-alpine
     env_file:
       - ./.env
+    environment:
+      - POSTGRES_DB=yfinance
     ports:
       - "${DB_PORT}:5432"
     networks:
@@ -12,23 +14,11 @@ services:
       - postgres_data:/var/lib/postgresql/data/
       - ./initdb.d:/docker-entrypoint-initdb.d
     restart: always
-  # jupyter:
-  #   container_name: jupyter
-  #   build: jupyter
-  #   ports:
-  #     - "8888:8888"
-  #   volumes:
-  #     - .:/home/jovyan/work
-  #   networks:
-  #     - shared-net
-  #   depends_on:
-  #     - db
-  #   restart: always
   yfinance:
     container_name : yfinance
     build: yfinance_db
     env_file:
-      - ./yfinance_db/.env
+      - ./.env
     networks:
       - shared-net
     depends_on:
@@ -44,7 +34,9 @@ services:
   #     - shared-net
   #   depends_on:
   #     - db
+
 volumes:
   postgres_data:
+
 networks:
   shared-net:

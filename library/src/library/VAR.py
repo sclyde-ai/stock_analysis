@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # my library
-from . import ListAndStr
+from ... import ListAndStr
 from . import matrix
 
 # statsmodels
