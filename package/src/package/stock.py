@@ -4,10 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # standard
-import json
 
 # my library
-from ... import ListAndStr
+from .data_analysis.dataclass import ListAndStr
 from . import VAR
 
 # others
@@ -15,36 +14,43 @@ from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib.dates as mdates
 from statsmodels.tsa.stattools import acf
 
-from yfinance import Tickers
-
-# get parameter.json
-with open('../parameter.json', 'r', encoding='utf-8') as f:
-    json_string = f.read()
-    parameter = json.loads(json_string)
-    lower_tickers = [ticker.lower() for ticker in parameter['tickers']]
-
-# date or datetime
-date_interval_list = ['1d', '5d', '1wk', '1mo', '3mo']
-datetime_interval_list = ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h']
+from .ticker import Tickers
 
 class Stock(Tickers):
-    def __init__(self, tickers: ListAndStr=lower_tickers, interval: str='1m'):
-        super().__init__(tickers, intervals=[interval])
-        self.tickers = tickers
+    def __init__(self, tickers: ListAndStr=None, interval: ListAndStr='1d', value_type: str='Close', series_type: str=''):
+        if tickers:
+            super().__init__(tickers=tickers)
+        else:
+            super().__init__()
         self.interval = interval
-        self.data = self.get_all_data()
+        self.data = self.get_all_stock_data()
 
-        self.close = self.close()
-        self.open = self.open()
-        self.high = self.high()
-        self.low = self.low()
+        self.prices = self.Value(value_type)
+        self._set_series(series_type)
+        self.value_type = value_type
+        self.series_type = series_type
 
-        self.prices = self.close
-        self.prices = self.prices.dropna(how='all', axis=1)
-        self.value_type = 'Close'
-        self.series_type = ''
+        # self.VAR = VAR.VAR(self.prices)
+    
+    def get_stock_data(
+            self,
+            ticker: str,
+        ) -> pd.DataFrame:
+        try:
+            if self.interval in self.date_interval_list:
+                data = self.get_data(f"{ticker}_{self.interval}", index_col='Date')
+            else:
+                data = self.get_data(f"{ticker}_{self.interval}", index_col='Datetime')
+            return data
+        except Exception as e:
+            print(f"Could not load data : {e}")
+            return None
 
-        self.VAR = VAR.VAR(self.prices)
+    def get_all_stock_data(self) -> dict:
+        ticker_dict = {}
+        for ticker in self.tickers:
+            ticker_dict[ticker] = self.get_stock_data(ticker)
+        return ticker_dict
 
     def dropna(self, how='any', axis=0):
         self.prices = self.prices.dropna(how=how, axis=axis)
@@ -78,72 +84,61 @@ class Stock(Tickers):
     def diff(self):
         self.prices = self.prices.diff().dropna()
         self.series_type += '_diff'
-        return self
-    def log_diff(self):
-        index = self.prices.index
-        self.prices = self.prices.apply(np.log)
-        self.prices.index = index
-        self.prices = self.prices.diff()
-        self.series_type += '_log_diff'
+        return self    
+    def _set_series(self):
+        series_type_list = self.series_type.split('_')
+        for series_type in series_type_list:
+            if series_type == 'log':
+                self.log()
+            elif series_type == 'diff':
+                self.diff()
+            else:
+                pass
         return self
     
-    def _set_close(self):
+    def Value(self, value_type: str):
+        df = pd.DataFrame()
         for ticker in self.tickers:
-            self.prices[ticker] = self.data[ticker][self.interval]['Close']
-        self.value_type = 'Close'
-        return self
-    def _set_open(self):
-        for ticker in self.tickers:
-            self.prices[ticker] = self.data[ticker][self.interval]['Open']
-        self.value_type = 'Open'
-        return self
-    def _set_high(self):
-        for ticker in self.tickers:
-            self.prices[ticker] = self.data[ticker][self.interval]['High']
-        self.vale_type = 'High'
-        return self
-    def _set_low(self):
-        for ticker in self.tickers:
-            self.prices[ticker] = self.data[ticker][self.interval]['Low']
-        self.value_type = 'Low'
-        return self
+            print(ticker)
+            series = self.data[ticker][value_type]
+            series.name = ticker 
+            df = df.join(series, how='outer')
+        df = df.dropna(how='all', axis=1)
+        self.tickers = df.columns
+        return df
+    @ property
+    def Close(self):
+        return self.Value('Close')
+    @ property
+    def Open(self):
+        return self.Value('Open')
+    @ property
+    def High(self):
+        return self.Value('High')
+    @ property
+    def Low(self):
+        return self.Value('Low')
     
     def close(self):
-        df = pd.DataFrame()
-        for ticker in self.tickers:
-            series = self.data[ticker][self.interval]['Close']
-            series.name = ticker 
-            df = df.join(series, how='outer')
-        df = df.dropna(how='all', axis=1)
-        self.tickers = df.columns
-        return df
+        self.prices = self.Close
+        self.value_type = 'Close'
+        self._set_series()
+        return self
     def open(self):
-        df = pd.DataFrame()
-        for ticker in self.tickers:
-            series = self.data[ticker][self.interval]['Open']
-            series.name = ticker 
-            df = df.join(series, how='outer')
-        df = df.dropna(how='all', axis=1)
-        self.tickers = df.columns
-        return df
+        self.prices = self.Open
+        self.value_type = 'Open'
+        self._set_series()
+        return self
     def high(self):
-        df = pd.DataFrame()
-        for ticker in self.tickers:
-            series = self.data[ticker][self.interval]['High']
-            series.name = ticker 
-            df = df.join(series, how='outer')
-        df = df.dropna(how='all', axis=1)
-        self.tickers = df.columns
-        return df
+        self.prices = self.High
+        self.vale_type = 'High'
+        self._set_series()
+        return self
     def low(self):
-        df = pd.DataFrame()
-        for ticker in self.tickers:
-            series = self.data[ticker][self.interval]['Low']
-            series.name = ticker 
-            df = df.join(series, how='outer')
-        df = df.dropna(how='all', axis=1)
-        self.tickers = df.columns
-        return df
+        self.prices = self.Low
+        self.value_type = 'Low'
+        self._set_series()
+        return self
             
     def avg(self) -> float:
         return self.prices.mean().item()
