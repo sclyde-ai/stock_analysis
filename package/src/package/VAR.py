@@ -4,14 +4,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # my library
-from . import ListAndStr
-from . import matrix
+from .data_analysis.dataclass import ListAndStr
+from .data_analysis import matrix
 
 # statsmodels
 from statsmodels.tsa.api import VAR
 from statsmodels.tsa.stattools import adfuller
-from statsmodels.stats.stattools import durbin_watson
-
 
 class VAR():
     def __init__(self, df: pd.DataFrame):
@@ -33,7 +31,7 @@ class VAR():
             adf_df[column] = adf_series
         return adf_df
     
-    def results(self, maxlags: int=None) -> dict:
+    def results(self, maxlags: int=None) -> dict: 
         maxlen = len(self.df)
         if maxlags == None or maxlen < maxlags:
             maxlags = maxlen-1

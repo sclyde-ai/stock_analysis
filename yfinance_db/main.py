@@ -16,16 +16,17 @@ DB_USER = os.getenv('POSTGRES_USER')
 DB_PASSWORD = os.getenv('POSTGRES_PASSWORD')
 DB_HOST = os.getenv('DB_HOST')  # docker-compose.ymlで定義したサービス名
 DB_PORT = os.getenv('DB_PORT')
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:5432/{DB_NAME}"
+# print(DB_PORT)
 
 def get_stock_data(ticker_obj, interval, period="max", start=None):
     time.sleep(1)
     data = ticker_obj.history(interval=interval, period=period, start=start)
     return data
 
-def save_to_db(data, table_name, engine):
+def save_to_db(data, table_name, engine, index_label):
     if not data.empty:
-        data.to_sql(table_name, engine, if_exists='append')
+        data.to_sql(table_name, engine, if_exists='append', index_label=index_label)
 
 def get_and_save_financials(ticker_obj, ticker_str, engine):
     financials_map = {
@@ -44,7 +45,7 @@ def get_and_save_financials(ticker_obj, ticker_str, engine):
             data = data.transpose()
             data.index.name = 'date'
             print(f"Saving {name} data for {ticker_str} to table {table_name}...")
-            save_to_db(data, table_name, engine)
+            save_to_db(data, table_name, engine, index_label='date')
             print(f"Successfully saved {name} data for {ticker_str}.")
 
 
@@ -97,7 +98,7 @@ def get_and_save_news(ticker_obj, ticker_str, engine):
 
         table_name = f"{ticker_str.lower()}_news"
         print(f"Saving news for {ticker_str} to table {table_name}...")
-        save_to_db(df, table_name, engine)
+        save_to_db(df, table_name, engine, index_label='uuid')
         print(f"Successfully saved {len(df)} news articles for {ticker_str}.")
 
 
@@ -110,11 +111,14 @@ if __name__ == "__main__":
         date_interval_list = ['1d', '5d', '1wk', '1mo', '3mo']
         
         engine = create_engine(DATABASE_URL)
+        print(engine)
+        print(DATABASE_URL)
         try:
             with engine.connect() as connection:
                 print(f"Successfully connected to the database.")
         except Exception as e:
             print("Failed to connect to the database after multiple retries. Exiting.")
+            print(e)
             exit(1)
         
         inspector = inspect(engine)
@@ -158,7 +162,11 @@ if __name__ == "__main__":
 
                         if not stock_data.empty:
                             print(f"Saving data for {ticker} with interval {interval} to table {table_name}...")
-                            save_to_db(stock_data, table_name, engine)
+                            if interval in datetime_interval_list:
+                                index_name = "Datetime"
+                            else:
+                                index_name = "Date"
+                            save_to_db(stock_data, table_name, engine, index_label=index_name)
                             print(f"Successfully saved {len(stock_data)} new data points for {ticker} with interval {interval}.")
                         else:
                             print(f"No new data found for {ticker} with interval {interval}.")
