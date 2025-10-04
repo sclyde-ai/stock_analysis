@@ -34,6 +34,13 @@ services:
   #     - shared-net
   #   depends_on:
   #     - db
+  # jquants:
+  #   build: .
+  #   container_name: jquants_app
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     - db
 
 volumes:
   postgres_data:

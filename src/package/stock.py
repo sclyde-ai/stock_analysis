@@ -24,7 +24,6 @@ class Stock(Tickers):
             super().__init__()
         self.interval = interval
         self.data = self.get_all_stock_data()
-
         self.prices = self.Value(value_type)
         self._set_series(series_type)
         self.value_type = value_type

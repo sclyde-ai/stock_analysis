@@ -4,6 +4,7 @@ import pandas as pd
 # standard
 import os
 import json
+import sys
 
 # my library
 from .data_analysis.dataclass import ListAndStr
@@ -11,6 +12,17 @@ from .data_analysis.dataclass import ListAndStr
 # others
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
+from pathlib import Path
+
+sys.path.append(str(Path.cwd().parent))
+
+# 1. このスクリプトファイル自身の絶対パスを取得
+# .resolve() はシンボリックリンクなどを解決して完全なパスにします
+script_path = Path(__file__).resolve()
+
+# 2. 親の親のディレクトリパスを取得
+# .parent で1つ上の親ディレクトリを取得できます
+grandparent_dir = script_path.parent.parent.parent
 
 # get parameter.json
 with open('../parameter.json', 'r', encoding='utf-8') as f:

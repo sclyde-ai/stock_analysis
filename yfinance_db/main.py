@@ -2,7 +2,7 @@ import os
 import time
 import yfinance as yf
 import pandas as pd
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, text
 import json
 from dotenv import load_dotenv
 from datetime import timedelta
@@ -25,20 +25,70 @@ def get_stock_data(ticker_obj, interval, period="max", start=None):
     return data
 
 def save_to_db(data, table_name, engine, index_label):
-    if not data.empty:
-        data.to_sql(table_name, engine, if_exists='append', index_label=index_label)
+    """
+    Performs an "UPSERT" operation for PostgreSQL.
+    If the table does not exist, it creates it, sets the primary key, and inserts the data.
+    If the table exists, it inserts new rows or updates existing ones based on the primary key.
+    """
+    if data.empty:
+        return
 
-def get_and_save_financials(ticker_obj, ticker_str, engine):
-    financials_map = {
-        'financials_annual': ticker_obj.financials,
+    inspector = inspect(engine)
+
+    with engine.connect() as connection:
+        if not inspector.has_table(table_name):
+            # Table doesn't exist: create it, set PK, and insert the data.
+            print(f"Table '{table_name}' not found. Creating it and inserting initial data.")
+            try:
+                # Use pandas to create the table and insert the first batch of data.
+                data.to_sql(table_name, connection, if_exists='fail', index=True, index_label=index_label)
+                # Set the primary key, which is crucial for future upserts.
+                with connection.begin() as transaction:
+                    connection.execute(text(f'ALTER TABLE "{table_name}" ADD PRIMARY KEY ("{index_label}");'))
+                    transaction.commit()
+                print(f"Successfully created table '{table_name}' with '{index_label}' as primary key.")
+            except Exception as e:
+                print(f"Error creating table '{table_name}': {e}")
+        else:
+            # Table exists: perform the upsert logic.
+            temp_table_name = f"temp_{table_name}_{int(time.time())}"
+            with connection.begin() as transaction:
+                try:
+                    # Step 1: Write the DataFrame to a temporary table.
+                    data.to_sql(temp_table_name, connection, if_exists='replace', index=True, index_label=index_label)
+
+                    # Step 2: Prepare column names for the SQL query.
+                    df_cols = [f'"{c}"' for c in data.columns]
+                    all_cols = [f'"{index_label}"'] + df_cols
+                    update_stmt = ", ".join([f'{col} = EXCLUDED.{col}' for col in df_cols])
+
+                    # Step 3: Execute the UPSERT from the temporary table.
+                    upsert_sql = text(f'''
+                        INSERT INTO "{table_name}" ({", ".join(all_cols)})
+                        SELECT {", ".join(all_cols)} FROM "{temp_table_name}"
+                        ON CONFLICT ("{index_label}") DO UPDATE SET {update_stmt};
+                    ''')
+                    connection.execute(upsert_sql)
+
+                    # Step 4: Drop the temporary table.
+                    connection.execute(text(f'DROP TABLE "{temp_table_name}"'))
+
+                    transaction.commit()
+                except Exception as e:
+                    print(f"An error occurred during the upsert to {table_name}: {e}")
+                    transaction.rollback()
+
+def get_and_save_income_stmt(ticker_obj, ticker_str, engine):
+    income_stmt_map = {
+        'income_stmt_annual': ticker_obj.income_stmt,
         'balance_sheet_annual': ticker_obj.balance_sheet,
         'cashflow_annual': ticker_obj.cashflow,
-        'financials_quarterly': ticker_obj.quarterly_financials,
+        'income_stmt_quarterly': ticker_obj.quarterly_income_stmt,
         'balance_sheet_quarterly': ticker_obj.quarterly_balance_sheet,
         'cashflow_quarterly': ticker_obj.quarterly_cashflow
     }
 
-    for name, data in financials_map.items():
+    for name, data in income_stmt_map.items():
         if not data.empty:
             table_name = f"{ticker_str.lower()}_{name}"
             # Transpose and format data
@@ -171,8 +221,8 @@ if __name__ == "__main__":
                         else:
                             print(f"No new data found for {ticker} with interval {interval}.")
 
-                    # Fetch and save financials and news data once per ticker
-                    get_and_save_financials(ticker_obj, ticker, engine)
+                    # Fetch and save income_stmt and news data once per ticker
+                    get_and_save_income_stmt(ticker_obj, ticker, engine)
                     get_and_save_news(ticker_obj, ticker, engine)
                     print(f"--- Finished processing ticker: {ticker} ---")
                     time.sleep(1) # Add a small delay between tickers
