@@ -1,5 +1,8 @@
 import pandas as pd
 import yfinance as yf
+import datetime
+import time
+from typing import Union
 
 # scipy
 import pandas as pd
@@ -16,8 +19,7 @@ class FinancialStatement(Tickers):
             super().__init__(tickers=tickers)
         else:
             super().__init__()
-        self.BS = self.get_all_balance_sheet()
-        self.PL = self.get_all_income_stmt()
+        self.BS, self.PL = self.get_all_year()
 
     def get_balance_sheet(
             self,
@@ -49,17 +51,64 @@ class FinancialStatement(Tickers):
             print(f"Could not load data : {e}")
             return None
 
-    def get_all_balance_sheet(self) -> dict:
-        ticker_dict = {}
+    def get_all_data(self) -> dict:
+        BS_dict = {}
+        PL_dict = {}
+        try:
+            for ticker in self.tickers:
+                BS_dict[ticker] = self.get_balance_sheet(ticker)
+                PL_dict[ticker] = self.get_income_stmt(ticker)
+            return BS_dict, PL_dict
+        except Exception as e:
+            print(f"Could not get all data: {e}")
+            return None, None
+
+    def get_by_year(self, year):
+        year = int(year)
+        all_bs = []
+        all_pl = []
+
         for ticker in self.tickers:
-            ticker_dict[ticker] = self.get_balance_sheet(ticker)
-        return ticker_dict
+            # 年次データを取得
+            bs = self.get_balance_sheet(ticker, quarterly=False)
+            pl = self.get_income_stmt(ticker, quarterly=False)
+
+            # 'date' 列をdatetimeに変換
+            if bs is not None and 'date' in bs.columns and not bs.empty:
+                bs['date'] = pd.to_datetime(bs['date'])
+                bs_for_year = bs[bs['date'].dt.year == year]
+                if not bs_for_year.empty:
+                    # 最初の行を使用し、'date'列を除外
+                    bs_series = bs_for_year.iloc[0].drop('date')
+                    bs_series.name = ticker
+                    all_bs.append(bs_series)
+
+            if pl is not None and 'date' in pl.columns and not pl.empty:
+                pl['date'] = pd.to_datetime(pl['date'])
+                pl_for_year = pl[pl['date'].dt.year == year]
+                if not pl_for_year.empty:
+                    # 最初の行を使用し、'date'列を除外
+                    pl_series = pl_for_year.iloc[0].drop('date')
+                    pl_series.name = ticker
+                    all_pl.append(pl_series)
+
+        # DataFrameを結合
+        bs_df = pd.concat(all_bs, axis=1) if all_bs else pd.DataFrame()
+        pl_df = pd.concat(all_pl, axis=1) if all_pl else pd.DataFrame()
+        
+        return bs_df.T, pl_df.T
     
-    def get_all_income_stmt(self) -> dict:
-        ticker_dict = {}
-        for ticker in self.tickers:
-            ticker_dict[ticker] = self.get_income_stmt(ticker)
-        return ticker_dict
+    def get_all_year(self) -> dict:
+        BS_dict = {}
+        PL_dict = {}
+        current_year = datetime.datetime.now().year
+        for year in range(2000, current_year + 1):
+            bs, pl = self.get_by_year(year)
+            if not bs.empty:
+                BS_dict[year] = bs
+            if not pl.empty:
+                PL_dict[year] = pl
+        return BS_dict, PL_dict
     
     # profitability
     @property

@@ -66,7 +66,6 @@ class Tickers:
         for ticker in self.tickers:
             try:
                 data = self.get_data(ticker)
-                print(data)
                 data_dict[ticker] = data
             except Exception as e:
                 print(f"Could not load data : {e}")

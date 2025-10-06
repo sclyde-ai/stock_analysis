@@ -26,10 +26,6 @@
 ## official data
     - e-stat
 
-# port allocation
-    5433 : yfinance
-    5434 : news
-
 # template
     %pip install -r requirements.txt
     # !docker compose -f ../docker-compose.yml up
