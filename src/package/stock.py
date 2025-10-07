@@ -24,10 +24,12 @@ class Stock(Tickers):
             super().__init__()
         self.interval = interval
         self.data = self.get_all_stock_data()
+        print('data')
+        print(self.data)
         self.prices = self.Value(value_type)
-        self._set_series(series_type)
         self.value_type = value_type
         self.series_type = series_type
+        self._set_series()
 
         # self.VAR = VAR.VAR(self.prices)
     
@@ -49,6 +51,7 @@ class Stock(Tickers):
         ticker_dict = {}
         for ticker in self.tickers:
             ticker_dict[ticker] = self.get_stock_data(ticker)
+            # print(ticker_dict[ticker])
         return ticker_dict
 
     def dropna(self, how='any', axis=0):
@@ -160,10 +163,6 @@ class Stock(Tickers):
                 continue
 
             plt.figure(figsize=(12, 6))
-            # plt.plot(self.close[ticker], label='Close Price', color='blue', linewidth=2)
-            # plt.plot(self.high[ticker], label='High Price', color='red', linestyle='--')
-            # plt.plot(self.low[ticker], label='Low Price', color='green', linestyle='--')
-            # plt.plot(self.open[ticker], label='Open Price', color='orange', linestyle=':')
             plt.plot(self.prices[ticker], label='Price')
             plt.title(f'{ticker} Stock Price {self.value_type} {self.series_type}')
             plt.xlabel('Date')
@@ -193,35 +192,3 @@ class Stock(Tickers):
             autocorr_df = pd.concat([autocorr_df, series], axis=1)
             # print(autocorr_df)
         return autocorr_df
-
-    def CandleStick(self, day=200, moving_average: ListAndStr=[5, 10, 20 ,50, 75, 100], tickers: ListAndStr=None):
-        if tickers == None:
-            tickers = self.tickers
-        for ticker in tickers:
-            if not ticker in self.tickers:
-                print(f"{ticker} does not exist")
-                continue
-            # prepare history
-            candlestick_history = self.history[ticker].copy()
-            candlestick_history = candlestick_history.reset_index()
-            candlestick_history['Date'] = candlestick_history['Date'].map(mdates.date2num)
-            candlestick_history = candlestick_history[-day:]
-
-            fig, ax = plt.subplots(figsize=(12, 6))
-            # illustrate a candlestick
-            candlestick_ohlc(ax, candlestick_history[['Date', 'Open', 'High', 'Low', 'Close']].values, 
-                            width=1, colorup='g', colordown='r')
-            # add a moving average
-            for ma in moving_average:
-                candlestick_history[f'MA{ma}'] = candlestick_history['Close'].rolling(ma).mean()
-                ax.plot(candlestick_history['Date'], candlestick_history[f'MA{ma}'], label=f'{ma} day moving average')
-
-            ax.xaxis_date()
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
-            plt.title(f'{ticker} candlestick')
-            plt.xlabel('Date')
-            plt.ylabel('price (USD)')
-            plt.legend()
-            plt.grid(True)
-            plt.show()
-            plt.close()
