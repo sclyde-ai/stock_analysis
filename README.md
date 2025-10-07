@@ -16,8 +16,8 @@ test directory内であれば
 # directoryの説明
 - [x] yfinance_db: yfinanceからdataを取得してSQLに保存する
 - [x] library: 自身が学んだデータ分析手法や計算方法などを再利用できるようにpackageにしている
-- [ ] news_db: news_apiでdataを取得する（稼働停止）
-- [ ] jquants_db: 日本取引所グループからdataを取得する（稼働停止）
+- [ ] news_db: news_apiでdataを取得する
+- [ ] jquants_db: 日本取引所グループからdataを取得する
 checkは稼働中を意味する
 
 # Valid period values
