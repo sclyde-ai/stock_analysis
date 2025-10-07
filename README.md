@@ -16,7 +16,7 @@ test directory内であれば
 # directoryの説明
 - [x] yfinance_db: yfinanceからdataを取得してSQLに保存する
 - [x] library: 自身が学んだデータ分析手法や計算方法などを再利用できるようにpackageにしている
-- [ ] news_db: news_apiでdataを取得する
+- [ ] news_db: news_apiからdataを取得する
 - [ ] jquants_db: 日本取引所グループからdataを取得する
 checkは稼働中を意味する
 
@@ -30,7 +30,7 @@ checkは稼働中を意味する
 # data一覧
 - [ ] yfinance
     - [x] 株価
-    - [ ] 財務諸表
+    - [x] 財務諸表
     - [ ] cashflow
     - [ ] news
 - [ ] news_api
