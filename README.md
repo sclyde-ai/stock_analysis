@@ -21,9 +21,14 @@ test directory内であれば
 checkは稼働中を意味する
 
 # packageの機能
-- [ ] CAPM
+- [ ] 株価
+    - [ ] 株価の可視化
+    - [ ] 株価予測model
+- [ ] 財務諸表
+    - [ ] 財務諸表の可視化
+    - [ ] 財務指標の計算
 - [ ] data分析
-- [ ] 株価予測model
+- [ ] CAPM
 - [ ] C言語による計算機能
 - [ ] smart contract
 
