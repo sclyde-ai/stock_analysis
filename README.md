@@ -14,8 +14,8 @@ test directory内であれば
 ```
 
 # directoryの説明
-- [o] yfinance_db: yfinanceからdataを取得してSQLに保存する
-- [o] library: 自身が学んだデータ分析手法や計算方法などを再利用できるようにpackageにしている
+- [] yfinance_db: yfinanceからdataを取得してSQLに保存する
+- [] library: 自身が学んだデータ分析手法や計算方法などを再利用できるようにpackageにしている
 - [x] news_db: news_apiでdataを取得する（稼働停止）
 - [x] jquants_db: 日本取引所グループからdataを取得する（稼働停止）
 
