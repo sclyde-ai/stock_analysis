@@ -14,34 +14,35 @@ test directory内であれば
 ```
 
 # directoryの説明
-    - yfinance_db : yfinanceからdataを取得してSQLに保存しています
-    - library : 自身が学んだデータ分析手法や計算方法などを再利用できるようにpackageにしています
-    - bash : 作業中に便利だと思ったcommandを保存しています
+- yfinance_db : yfinanceからdataを取得してSQLに保存しています
+- library : 自身が学んだデータ分析手法や計算方法などを再利用できるようにpackageにしています
+- bash : 作業中に便利だと思ったcommandを保存しています
 
 # Valid period values
-    - period_list = ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']
+    period_list = ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']
 # Valid interval values
-    - datetime_interval_list = ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h']
-    - date_interval_list = ['1d', '5d', '1wk', '1mo', '3mo']
+    datetime_interval_list = ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h']
+    date_interval_list = ['1d', '5d', '1wk', '1mo', '3mo']
 
 # 今後の方針
-    - directory全体のpackage化
-    - cloud serviceを用いたserverの構築
-    - APIからdataを取得
-    - libraryの拡充
-    - 資産運用のsimulation
-    - notion dashboardの作成
+- directory全体のpackage化
+- cloud serviceを用いたserverの構築
+- APIからdataを取得
+- libraryの拡充
+- 資産運用のsimulation
+- notion dashboardの作成
 
 # Fianancial data API
 ## stock data
-    - yfinance
-    - Alpha Vantage
-    - JPX
+- yfinance
+- Alpha Vantage
+- JPX
 
 ## official data
-    - e-stat
+- e-stat
 
 # template
+```
     %pip install -r requirements.txt
     # !docker compose -f ../docker-compose.yml up
 
@@ -85,3 +86,4 @@ test directory内であれば
 
     engine = create_engine(DATABASE_URL) 
     print("Successfully connected to the database.")
+```
