@@ -1,3 +1,18 @@
+# 使い方
+test directory内であれば
+```
+    %pip install -r requirements.txt
+    # !docker compose -f ../docker-compose.yml up
+
+    import sys
+
+    from pathlib import Path
+    sys.path.append(str(Path.cwd().parent))
+
+    from src.package.ticker import Tickers
+    from src.package.stock import Stock
+```
+
 # directoryの説明
     - yfinance_db : yfinanceからdataを取得してSQLに保存しています
     - library : 自身が学んだデータ分析手法や計算方法などを再利用できるようにpackageにしています
