@@ -14,10 +14,10 @@ test directory内であれば
 ```
 
 # directoryの説明
-- [] yfinance_db: yfinanceからdataを取得してSQLに保存する
-- [] library: 自身が学んだデータ分析手法や計算方法などを再利用できるようにpackageにしている
-- [x] news_db: news_apiでdataを取得する（稼働停止）
-- [x] jquants_db: 日本取引所グループからdataを取得する（稼働停止）
+- [x] yfinance_db: yfinanceからdataを取得してSQLに保存する
+- [x] library: 自身が学んだデータ分析手法や計算方法などを再利用できるようにpackageにしている
+- [ ] news_db: news_apiでdataを取得する（稼働停止）
+- [ ] jquants_db: 日本取引所グループからdataを取得する（稼働停止）
 
 # Valid period values
     period_list = ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']
