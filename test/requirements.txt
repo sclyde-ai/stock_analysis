@@ -1,5 +1,9 @@
+numpy
 pandas
+jupyter
+ipykernel
+matplotlib
+japanize-matplotlib
 sqlalchemy
 psycopg2-binary
 python-dotenv
-matplotlib
