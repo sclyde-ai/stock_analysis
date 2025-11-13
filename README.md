@@ -48,3 +48,5 @@ checkは稼働中を意味する
 - [ ] cloud serviceを用いたserverの構築
 - [ ] 資産運用のsimulation
 - [ ] dashboardの作成
+
+- [ ] fin-py
