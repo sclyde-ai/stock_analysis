@@ -23,24 +23,6 @@ services:
       - shared-net
     depends_on:
       - db
-  # news:
-  #   container_name: news
-  #   build: news_db
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #   env_file:
-  #     - ./news_db/.env
-  #   networks:
-  #     - shared-net
-  #   depends_on:
-  #     - db
-  # jquants:
-  #   build: .
-  #   container_name: jquants_app
-  #   env_file:
-  #     - .env
-  #   depends_on:
-  #     - db
 
 volumes:
   postgres_data:

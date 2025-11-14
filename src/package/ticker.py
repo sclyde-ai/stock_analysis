@@ -5,6 +5,8 @@ import pandas as pd
 import os
 import json
 import sys
+import time
+import random
 
 # my library
 from .data_analysis.dataclass import ListAndStr
@@ -28,7 +30,13 @@ grandparent_dir = script_path.parent.parent.parent
 with open('../parameter.json', 'r', encoding='utf-8') as f:
     json_string = f.read()
     parameter = json.loads(json_string)
-    lower_tickers = [ticker.lower() for ticker in parameter['tickers']]
+    tickers = parameter['tickers']
+    print(tickers)
+    tickers = [ticker.lower() if not ticker[:-2].isdigit() else ticker for ticker in tickers]
+    tickers = [ticker + ".T" if ticker.isdigit() and ticker[-2:] != ".T" else ticker for ticker in tickers]
+    tickers = [ticker if ticker.isdigit() and ticker[-2:] == ".T" else ticker for ticker in tickers]
+
+print(tickers)
 
 load_dotenv(dotenv_path='../.env')
 DB_USER = os.getenv('POSTGRES_USER')
@@ -45,7 +53,7 @@ except Exception as e:
 class Tickers:
     """ 
     """
-    all_tickers = lower_tickers
+    all_tickers = tickers
     all_intervals = parameter["intervals"]
     datetime_interval_list = ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h']
     date_interval_list = ['1d', '5d', '1wk', '1mo', '3mo']
@@ -56,6 +64,7 @@ class Tickers:
     def get_data(self, table_name: str, index_col: str=None) -> pd.DataFrame:
         try: 
             data = pd.read_sql(table_name, engine, index_col=index_col)
+            time.sleep(random.random(1, 5))
             return data
         except Exception as e:
             print(f"Could not load data : {e}")
@@ -66,8 +75,12 @@ class Tickers:
         for ticker in self.tickers:
             try:
                 data = self.get_data(ticker)
-                data_dict[ticker] = data
+                if ticker[-2:] == ".T":
+                    data_dict["T" + ticker[-2:]] = data
+                else:
+                    data_dict[ticker] = data
             except Exception as e:
                 print(f"Could not load data : {e}")
                 continue
+        print(data_dict.keys())
         return data_dict

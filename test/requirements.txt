@@ -7,3 +7,5 @@ japanize-matplotlib
 sqlalchemy
 psycopg2-binary
 python-dotenv
+statsmodels
+mplfinance

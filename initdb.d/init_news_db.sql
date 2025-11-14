@@ -1,1 +1,0 @@
-news_db/init_news_db.sql

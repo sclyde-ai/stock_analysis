@@ -24,13 +24,13 @@ class Stock(Tickers):
             super().__init__()
         self.interval = interval
         self.data = self.get_all_stock_data()
-        print('data')
-        print(self.data)
+        # print('data')
+        # print(self.data)
         self.prices = self.Value(value_type)
         self.value_type = value_type
         self.series_type = series_type
         self._set_series()
-
+        self.prices['market'] = self.prices.sum(axis=1)
         # self.VAR = VAR.VAR(self.prices)
     
     def get_stock_data(
@@ -76,7 +76,8 @@ class Stock(Tickers):
                 prices_copy[column] = 0  # すべての値を0に設定（平均が0になるため）
         self.prices = prices_copy
         return self
-
+    
+    # set to prices
     def log(self):
         index = self.prices.index
         self.prices = self.prices.apply(np.log)
@@ -86,7 +87,7 @@ class Stock(Tickers):
     def diff(self):
         self.prices = self.prices.diff().dropna()
         self.series_type += '_diff'
-        return self    
+        return self
     def _set_series(self):
         series_type_list = self.series_type.split('_')
         for series_type in series_type_list:
@@ -98,6 +99,7 @@ class Stock(Tickers):
                 pass
         return self
     
+    # return value
     def Value(self, value_type: str):
         df = pd.DataFrame()
         for ticker in self.tickers:
@@ -121,6 +123,7 @@ class Stock(Tickers):
     def Low(self):
         return self.Value('Low')
     
+    # set to prices
     def close(self):
         self.prices = self.Close
         self.value_type = 'Close'
